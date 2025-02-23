@@ -2,13 +2,40 @@
 <html lang="en">
 <head>
     <title>Workout Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='report.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h1>Your Progress Report</h1>
-    <ul>
-        {% for report in reports %}
-            <li>{{ report }}</li>
-        {% endfor %}
-    </ul>
+    <div class="container">
+        <header class="header">
+            <h1>Your Workout Progress Report</h1>
+        </header>
+
+        <main class="content">
+            {% if reports %}
+                <div class="report-list">
+                    {% for report in reports %}
+                        <div class="report-card">
+                            <h2>{{ report.title }}</h2>
+                            <p><strong>Date:</strong> {{ report.date.strftime('%Y-%m-%d') }}</p>
+                            <p><strong>Duration:</strong> {{ report.duration }} minutes</p>
+                            <p><strong>Calories Burned:</strong> {{ report.calories_burned if report.calories_burned else 'N/A' }} kcal</p>
+                            <p><strong>Type:</strong> {{ report.workout_type if report.workout_type else 'N/A' }}</p>
+                            <p><strong>Intensity:</strong> {{ report.intensity if report.intensity else 'N/A' }}</p>
+                            {% if report.notes %}
+                                <p><strong>Notes:</strong> {{ report.notes }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="no-report">No workout reports available. Start tracking your progress today!</p>
+            {% endif %}
+        </main>
+
+        <footer class="footer">
+            <a href="{{ url_for('dashboard') }}" class="btn">Back to Dashboard</a>
+        </footer>
+    </div>
 </body>
 </html>

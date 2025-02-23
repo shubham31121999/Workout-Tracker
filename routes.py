@@ -1,9 +1,10 @@
+from flask import Flask
 from flask import render_template, request, redirect, url_for, flash, jsonify, make_response
 from flask_jwt_extended import (
     create_access_token, jwt_required, get_jwt_identity, 
     set_access_cookies, unset_jwt_cookies
 )
-from models import db, User, Workout
+from models import db, User, Workout,Goal
 from flask_wtf.csrf import CSRFProtect
 from flask_jwt_extended import create_access_token, set_access_cookies, get_csrf_token
 from datetime import datetime
@@ -82,34 +83,81 @@ def init_routes(app):
         current_user_id = get_jwt_identity()
 
         if request.method == 'POST':
-            if request.is_json:
+            try:
+                # Extract workout data
                 data = request.get_json()
                 title = data.get('title')
-                workout_date = data.get('date')  # This is a string (YYYY-MM-DD)
-            else:
-                title = request.form.get('title')
-                workout_date = request.form.get('date')
+                date = data.get('date')
+                duration = data.get('duration')
+                calories_burned = data.get('calories_burned')
+                workout_type = data.get('workout_type')
+                intensity = data.get('intensity')
+                notes = data.get('notes')
 
-            if not title or not workout_date:
-                return jsonify({"msg": "Missing title or date"}), 400
+                # Validate required fields
+                if not all([title, date, duration]):
+                    return jsonify({'error': 'Missing required fields'}), 400
 
-            try:
-                # ✅ Convert the date string to a Python `date` object
-                workout_date = datetime.strptime(workout_date, "%Y-%m-%d").date()
-            except ValueError:
-                return jsonify({"msg": "Invalid date format, use YYYY-MM-DD"}), 400
+                # Parse date and convert values
+                date = datetime.strptime(date, '%Y-%m-%d').date()
+                duration = int(duration)
+                calories_burned = int(calories_burned) if calories_burned else None
 
-            # ✅ Save workout to database
-            workout = Workout(title=title, date=workout_date, user_id=current_user_id)
-            db.session.add(workout)
-            db.session.commit()
+                # Create and save new workout
+                new_workout = Workout(
+                    title=title,
+                    date=date,
+                    duration=duration,
+                    calories_burned=calories_burned,
+                    workout_type=workout_type,
+                    intensity=intensity,
+                    notes=notes,
+                    user_id=current_user_id
+                )
 
-            return jsonify({"msg": "Workout created successfully!"}), 201
+                db.session.add(new_workout)
+                db.session.commit()
 
-        # List the user's workouts
-        user_workouts = Workout.query.filter_by(user_id=current_user_id).all()
+                # Update user's goals based on the new workout
+                update_goals(current_user_id, new_workout)
+
+                return jsonify({'message': 'Workout added successfully'}), 201
+
+            except Exception as e:
+                print(f"Error: {e}")
+                return jsonify({'error': 'Internal Server Error'}), 500
+
+        # GET: Retrieve and display workout history
+        user_workouts = Workout.query.filter_by(user_id=current_user_id).order_by(Workout.date.desc()).all()
         return render_template('workouts.html', workouts=user_workouts)
 
+    
+    
+    
+    @app.route('/goals', methods=['GET', 'POST'])
+    @jwt_required(locations=["cookies"])
+    def goals():
+        current_user_id = get_jwt_identity()
+
+        if request.method == 'POST':
+            data = request.get_json()
+            goal_type = data.get('goal_type')  # 'Calories', 'Duration', 'Frequency'
+            target_value = int(data.get('target_value'))
+            end_date = datetime.strptime(data.get('end_date'), '%Y-%m-%d').date()
+
+            new_goal = Goal(
+                user_id=current_user_id,
+                goal_type=goal_type,
+                target_value=target_value,
+                end_date=end_date
+            )
+
+            db.session.add(new_goal)
+            db.session.commit()
+            return jsonify({'message': 'Goal created successfully!'}), 201
+
+        user_goals = Goal.query.filter_by(user_id=current_user_id).all()
+        return render_template('goals.html', goals=user_goals)
 
     # Workout Report (Summary)
     @app.route('/report')
@@ -129,3 +177,25 @@ def init_routes(app):
         unset_jwt_cookies(response)  
 
         return response
+    
+    
+    def update_goals(user_id, workout):
+    # Fetch active goals for the logged-in user
+        active_goals = Goal.query.filter_by(user_id=user_id, status="In Progress").all()
+
+        for goal in active_goals:
+            if goal.goal_type == "Calories" and workout.calories_burned:
+                goal.current_value += workout.calories_burned
+
+            elif goal.goal_type == "Duration":
+                goal.current_value += workout.duration
+
+            elif goal.goal_type == "Frequency":
+                goal.current_value += 1
+
+            # Mark goal as completed if target is reached
+            if goal.current_value >= goal.target_value:
+                goal.status = "Completed"
+
+        db.session.commit()
+

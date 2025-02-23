@@ -2,10 +2,42 @@
 <html lang="en">
 <head>
     <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 <body>
-    <h1>Welcome, {{ username }}</h1>
-    <a href="{{ url_for('workouts') }}">My Workouts</a>
-    <a href="{{ url_for('logout') }}">Logout</a>
+    <div class="container">
+        <header class="header">
+            <h1>Welcome, {{ username }}</h1>
+        </header>
+
+        <main class="content">
+            <div class="card">
+                <h2>My Workouts</h2>
+                <p>Track and manage your workout routines.</p>
+                <a href="{{ url_for('workouts') }}" class="btn">View Workouts</a>
+            </div>
+
+            <div class="card">
+                <h2>Progress Reports</h2>
+                <p>Check your workout history and performance.</p>
+                <a href="{{ url_for('report') }}" class="btn">View Reports</a>
+            </div>
+            
+
+            <div class="card">
+                <h2>Goals</h2>
+                <p>Check your progress and Goals.</p>
+                <a href="{{ url_for('goals') }}" class="btn">View Your Goals</a>
+            </div>
+
+            
+
+        </main>
+
+        <footer class="footer">
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </footer>
+    </div>
 </body>
 </html>

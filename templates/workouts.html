@@ -1,38 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>My Workouts</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Page Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #4e54c8, #8f94fb);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h1, h2 {
+            color: #fff;
+        }
+
+        /* Container Styling */
+        .container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            margin-top: 2rem;
+            text-align: center;
+        }
+
+        /* Form Styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        label {
+            font-weight: bold;
+            text-align: left;
+        }
+
+        input, select, textarea {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: #4e54c8;
+            color: white;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #5f65d4;
+        }
+
+        /* Workout List */
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        /* Back Link */
+        .back-link {
+            margin-top: 1rem;
+            display: inline-block;
+            text-decoration: none;
+            color: #fff;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+
+        .back-link:hover {
+            opacity: 0.8;
+        }
+
+        /* Error Message */
+        .error {
+            color: red;
+            margin-top: 10px;
+        }
+
+    </style>
 </head>
+
 <body>
+
     <h1>Your Workouts</h1>
 
-    <!-- Add Workout Form -->
-    <form id="add-workout-form">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  <!-- ✅ CSRF Token -->
-        
-        <label for="title">Workout Title:</label>
-        <input type="text" name="title" required>
+    <div class="container">
+        <!-- Add Workout Form -->
+        <form id="add-workout-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-        <label for="date">Date:</label>
-        <input type="date" name="date" required>
+            <label for="title">Workout Title:</label>
+            <input type="text" id="title" name="title" placeholder="e.g., Morning Run" required>
 
-        <button type="submit">Add Workout</button>
-    </form>
+            <label for="date">Date:</label>
+            <input type="date" id="date" name="date" required>
 
-    <h2>Workout History</h2>
-    <ul>
-        {% if workouts %}
-            {% for workout in workouts %}
-                <li>{{ workout.title }} - {{ workout.date }}</li>
-            {% endfor %}
-        {% else %}
-            <p>No workouts added yet.</p>
-        {% endif %}
-    </ul>
+            <label for="duration">Duration (in minutes):</label>
+            <input type="number" id="duration" name="duration" placeholder="e.g., 60" required>
 
-    <a href="{{ url_for('dashboard') }}">Back</a>
+            <label for="calories_burned">Calories Burned:</label>
+            <input type="number" id="calories_burned" name="calories_burned" placeholder="Optional">
 
-    <!-- ✅ JavaScript (Place at the bottom) -->
+            <label for="workout_type">Workout Type:</label>
+            <select id="workout_type" name="workout_type">
+                <option value="Cardio">Cardio</option>
+                <option value="Strength">Strength</option>
+                <option value="Yoga">Yoga</option>
+                <option value="HIIT">HIIT</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <label for="intensity">Intensity:</label>
+            <select id="intensity" name="intensity">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+            </select>
+
+            <label for="notes">Notes (Optional):</label>
+            <textarea id="notes" name="notes" placeholder="Add any notes..."></textarea>
+
+            <button type="submit">Add Workout</button>
+        </form>
+
+        <!-- Error Message -->
+        <p id="error-message" class="error"></p>
+
+        <!-- Workout History -->
+        <h2>Workout History</h2>
+        <ul id="workout-list">
+            {% if workouts %}
+                {% for workout in workouts %}
+                    <li>
+                        <strong>{{ workout.title }}</strong> - {{ workout.date }}<br>
+                        Duration: {{ workout.duration }} min, Calories: {{ workout.calories_burned }}<br>
+                        Type: {{ workout.workout_type }}, Intensity: {{ workout.intensity }}<br>
+                        Notes: {{ workout.notes or 'No notes' }}
+                    </li>
+                {% endfor %}
+            {% else %}
+                <li>No workouts added yet.</li>
+            {% endif %}
+        </ul>
+
+        <a href="{{ url_for('dashboard') }}" class="back-link">⬅️ Back to Dashboard</a>
+    </div>
+
+    <!-- JavaScript for Dynamic Workout Creation -->
     <script>
         function getCSRFToken() {
             return document.cookie.split('; ')
@@ -40,29 +179,39 @@
                 ?.split('=')[1];
         }
 
-        document.getElementById("add-workout-form").addEventListener("submit", function(event) {
+        document.getElementById("add-workout-form").addEventListener("submit", async function (event) {
             event.preventDefault();
 
-            const title = document.querySelector("input[name='title']").value;
-            const date = document.querySelector("input[name='date']").value;
+            const title = document.getElementById("title").value.trim();
+            const date = document.getElementById("date").value;
+            const duration = document.getElementById("duration").value;
+            const calories_burned = document.getElementById("calories_burned").value || null;
+            const workout_type = document.getElementById("workout_type").value;
+            const intensity = document.getElementById("intensity").value;
+            const notes = document.getElementById("notes").value;
 
-            fetch("{{ url_for('workouts') }}", {
-                method: "POST",
-                credentials: "include",  // ✅ Include credentials for cookies
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": getCSRFToken()  // ✅ CSRF token in header
-                },
-                body: JSON.stringify({ title, date })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                location.reload(); // ✅ Refresh to update workout list
-            })
-            .catch(error => console.error("Error:", error));
+            try {
+                const response = await fetch("{{ url_for('workouts') }}", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": getCSRFToken()
+                    },
+                    body: JSON.stringify({ title, date, duration, calories_burned, workout_type, intensity, notes })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to add workout!");
+                }
+
+                location.reload(); 
+            } catch (error) {
+                document.getElementById("error-message").textContent = "Error: Unable to add workout.";
+            }
         });
     </script>
 
 </body>
+
 </html>

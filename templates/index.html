@@ -1,12 +1,55 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>Workout Tracker</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+
 <body>
-    <h1>Welcome to Workout Tracker</h1>
-    <a href="{{ url_for('login') }}">Login</a> | 
-    <a href="{{ url_for('register') }}">Register</a>
+    <div class="container">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <h1>Workout Tracker</h1>
+            <div class="nav-links">
+                <a href="{{ url_for('login') }}" class="btn">Login</a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline">Register</a>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <header class="hero">
+            <div class="hero-content">
+                <h2>Track Your Fitness Journey</h2>
+                <p>Set goals, monitor your progress, and achieve your best self.</p>
+                <a href="{{ url_for('register') }}" class="btn btn-primary">Get Started</a>
+            </div>
+        </header>
+
+        <!-- Features Section -->
+        <section class="features">
+            <div class="feature-card">
+                <h3>Set Your Goals</h3>
+                <p>Define clear goals and track your progress toward fitness milestones.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Track Workouts</h3>
+                <p>Log your workouts, monitor calories burned, and analyze performance.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>Stay Motivated</h3>
+                <p>Stay focused and consistent with insights and personalized tracking.</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer>
+            <p>&copy;2025 Shubham Uparkar</p>
+        </footer>
+    </div>
 </body>
+
 </html>

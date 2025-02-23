@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Set Fitness Goals</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='goals.css') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Your Fitness Goals</h1>
+        </header>
+
+        <main>
+            <form id="goal-form">
+                <label for="goal_type">Goal Type:</label>
+                <select id="goal_type" name="goal_type" required>
+                    <option value="Calories">Burn Calories</option>
+                    <option value="Duration">Workout Duration (Minutes)</option>
+                    <option value="Frequency">Workout Sessions</option>
+                </select>
+
+                <label for="target_value">Target Value:</label>
+                <input type="number" id="target_value" name="target_value" required>
+
+                <label for="end_date">End Date:</label>
+                <input type="date" id="end_date" name="end_date" required>
+
+                <button type="submit">Set Goal</button>
+            </form>
+
+            <h2>Current Goals</h2>
+            <div id="goal-list">
+                {% if goals %}
+                    {% for goal in goals %}
+                        <div class="goal-card">
+                            <h3>{{ goal.goal_type }}</h3>
+                            <p><strong>Target:</strong> {{ goal.target_value }}</p>
+                            <p><strong>Progress:</strong> {{ goal.current_value }}</p>
+                            <p><strong>Status:</strong> {{ goal.status }}</p>
+                            <p><strong>Deadline:</strong> {{ goal.end_date }}</p>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No goals set yet. Start by adding one!</p>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer>
+            <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('goal-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const goalType = document.getElementById('goal_type').value;
+            const targetValue = document.getElementById('target_value').value;
+            const endDate = document.getElementById('end_date').value;
+
+            fetch('/goals', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.cookie.split('; ').find(row => row.startsWith('csrf_access_token=')).split('=')[1]
+                },
+                body: JSON.stringify({ goal_type: goalType, target_value: targetValue, end_date: endDate })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            })
+            .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+
+</html>
