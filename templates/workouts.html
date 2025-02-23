@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>My Workouts</title>
+</head>
+<body>
+    <h1>Your Workouts</h1>
+    <ul>
+        {% for workout in workouts %}
+            <li>{{ workout.title }} - {{ workout.date }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('dashboard') }}">Back</a>
+</body>
+</html>

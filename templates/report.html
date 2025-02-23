@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Workout Report</title>
+</head>
+<body>
+    <h1>Your Progress Report</h1>
+    <ul>
+        {% for report in reports %}
+            <li>{{ report }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
