@@ -5,11 +5,64 @@
 </head>
 <body>
     <h1>Your Workouts</h1>
+
+    <!-- Add Workout Form -->
+    <form id="add-workout-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  <!-- ✅ CSRF Token -->
+        
+        <label for="title">Workout Title:</label>
+        <input type="text" name="title" required>
+
+        <label for="date">Date:</label>
+        <input type="date" name="date" required>
+
+        <button type="submit">Add Workout</button>
+    </form>
+
+    <h2>Workout History</h2>
     <ul>
-        {% for workout in workouts %}
-            <li>{{ workout.title }} - {{ workout.date }}</li>
-        {% endfor %}
+        {% if workouts %}
+            {% for workout in workouts %}
+                <li>{{ workout.title }} - {{ workout.date }}</li>
+            {% endfor %}
+        {% else %}
+            <p>No workouts added yet.</p>
+        {% endif %}
     </ul>
+
     <a href="{{ url_for('dashboard') }}">Back</a>
+
+    <!-- ✅ JavaScript (Place at the bottom) -->
+    <script>
+        function getCSRFToken() {
+            return document.cookie.split('; ')
+                .find(row => row.startsWith('csrf_access_token='))
+                ?.split('=')[1];
+        }
+
+        document.getElementById("add-workout-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const title = document.querySelector("input[name='title']").value;
+            const date = document.querySelector("input[name='date']").value;
+
+            fetch("{{ url_for('workouts') }}", {
+                method: "POST",
+                credentials: "include",  // ✅ Include credentials for cookies
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": getCSRFToken()  // ✅ CSRF token in header
+                },
+                body: JSON.stringify({ title, date })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                location.reload(); // ✅ Refresh to update workout list
+            })
+            .catch(error => console.error("Error:", error));
+        });
+    </script>
+
 </body>
 </html>
